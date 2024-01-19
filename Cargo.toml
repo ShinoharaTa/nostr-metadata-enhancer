@@ -1,8 +1,12 @@
 [package]
-name = "Nostr Profile ReUpdator"
+name = "nostr_rofile_reupdator"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+nostr = "0.27"
+nostr-sdk = "0.27"
+serde = "1.0"
+serde_json = "1.0"
