@@ -45,17 +45,12 @@ async fn main() -> Result<()> {
         let events = client
             .get_events_of(vec![filters], Some(Duration::from_secs(10)))
             .await?;
-        // println!("respnse : {events:#?}")
-        if let Some(event) = events.get(0) {
-            let content = &event.content;
+        if let Some(latest_event) = events.get(0) {
+            let content = &latest_event.content;
             println!("{content:#?}");
+            let event = EventBuilder::new(Kind::Metadata, content, []).to_event(&my_keys)?;
+            let _result = client.send_event(event).await?;
         }
-
-        // let event: Event = EventBuilder::metadata(&metadata).to_event(&my_keys)?;
-
-        // // Convert client nessage to JSON
-        // let json = ClientMessage::event(event).as_json();
-        // println!("{json}");
     }
 
     Ok(())
