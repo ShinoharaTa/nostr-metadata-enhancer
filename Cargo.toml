@@ -1,5 +1,5 @@
 [package]
-name = "nostr_rofile_reupdator"
+name = "nostr_profile_reupdator"
 version = "0.1.0"
 edition = "2021"
 
