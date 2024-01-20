@@ -13,6 +13,7 @@ fn load_config(file_path: &str) -> Result<Config, Box<dyn std::error::Error>> {
 #[derive(Serialize, Deserialize)]
 struct Config {
     keys: Vec<String>,
+    relays: Vec<String>,
 }
 
 #[tokio::main]
@@ -20,17 +21,7 @@ async fn main() -> Result<()> {
     let config_path = "./config.json";
     let config = load_config(config_path)?;
     let client = Client::default();
-    client
-        .add_relays([
-            "wss://relay-jp.nostr.wirednet.jp",
-            "wss://relay.nostr.wirednet.jp",
-            "wss://nos.lol",
-            "wss://relay.damus.io",
-            "wss://relay-jp.shino3.net",
-            "wss://yabu.me",
-        ])
-        .await?;
-
+    client.add_relays(config.relays).await?;
     client.connect().await;
 
     for key_str in config.keys {
