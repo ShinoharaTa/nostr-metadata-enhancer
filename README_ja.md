@@ -1,4 +1,4 @@
-# Nostr Metadata Reuploader Script
+# Nostr Metadata Enhancer
 
 これは何？
 
@@ -20,7 +20,7 @@ Nostr のリレーはデータ保持期間が明確でなく、また消失に�
 準備ができたらこのリポジトリをクローンしてきてください。
 
 ```
-git clone 
+git clone https://github.com/ShinoharaTa/nostr-metadata-enhancer.git
 ```
 
 ところで、パルワールドと言うゲーム楽しいですよね。隙を見つけて触らないようにしましょう？
