@@ -1,4 +1,4 @@
-# Nostr Metadata Reuploader Script
+# Nostr Metadata Enhancer 
 
 日本語ドキュメントこちら(jp only) -> [README_ja](./README_ja.md)
 
