@@ -3,10 +3,13 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::time::Duration;
 // use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use anyhow::{Context, Result};
 
-fn load_config(file_path: &str) -> Result<Config, Box<dyn std::error::Error>> {
-    let file_content = fs::read_to_string(file_path)?;
-    let config: Config = serde_json::from_str(&file_content)?;
+fn load_config(file_path: &str) -> Result<Config> {
+    let file_content = fs::read_to_string(file_path)
+        .with_context(|| format!("設定ファイル {} の読み込みに失敗しました", file_path))?;
+    let config: Config = serde_json::from_str(&file_content)
+        .with_context(|| format!("設定ファイル {} の展開に失敗しました", file_path))?;
     Ok(config)
 }
 
@@ -21,26 +24,31 @@ async fn main() -> Result<()> {
     let config_path = "./config.json";
     let config = load_config(config_path)?;
     let client = Client::default();
-    client.add_relays(config.relays).await?;
+    client
+        .add_relays(config.relays)
+        .await
+        .with_context(|| format!("リレーの設定に失敗しました"))?;
     client.connect().await;
 
-    for key_str in config.keys {
-        let my_keys = Keys::from_sk_str(&key_str)?;
-        let bech32_pubkey: String = my_keys.public_key().to_bech32()?;
-        println!("Bech32 PubKey: {}", bech32_pubkey);
-        println!("PubKey: {}", my_keys.public_key());
+    for key in config.keys {
+        let my_keys = Keys::from_sk_str(&key)
+            .with_context(|| format!("次のキーは正常に使用できませんでした: {}", key))?;
+        // println!("PubKey: {}", my_keys.public_key());
+        let npub: String = my_keys.public_key().to_bech32()?;
         let filters = Filter::new()
             .author(my_keys.public_key())
             .kind(Kind::Metadata)
             .limit(1);
         let events = client
             .get_events_of(vec![filters], Some(Duration::from_secs(10)))
-            .await?;
+            .await
+            .with_context(|| format!("Kind: 0 の取得に失敗しました: key={}", npub))?;
         if let Some(latest_event) = events.get(0) {
             let content = &latest_event.content;
-            println!("{content:#?}");
             let event = EventBuilder::new(Kind::Metadata, content, []).to_event(&my_keys)?;
             let _result = client.send_event(event).await?;
+        } else {
+            println!("Kind: 0 の取得に失敗しました: key={}", npub);
         }
     }
 
