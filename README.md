@@ -1,4 +1,4 @@
-# Nostr Metadata Reuploader Script
+# Nostr Metadata Enhancer 
 
 日本語ドキュメントこちら(jp only) -> [README_ja](./README_ja.md)
 
@@ -22,7 +22,7 @@ This is built in Rust. First, please prepare to run Rust on your PC or server.
 When you are ready, clone this repository.
 
 ```` git clone
-git clone 
+git clone https://github.com/ShinoharaTa/nostr-metadata-enhancer.git
 ````
 
 By the way, the game Pulworld is fun, isn't it? Let's find a gap and don't touch it, shall we?
