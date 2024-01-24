@@ -19,6 +19,34 @@ struct Config {
     relays: Vec<String>,
 }
 
+async fn nostr_process(client: &Client, key: String) -> Result<()> {
+    let keys = Keys::from_sk_str(&key)
+        .with_context(|| format!("次のキーは正常に使用できませんでした: {}", key))?;
+    let npub: String = keys.public_key().to_bech32()?;
+    let filters = Filter::new()
+        .author(keys.public_key())
+        .kind(Kind::Metadata)
+        .limit(1);
+    let events = client
+        .get_events_of(vec![filters], Some(Duration::from_secs(10)))
+        .await
+        .with_context(|| format!("Kind: 0 の取得に失敗しました: key={}", npub))?;
+    if let Some(latest_event) = events.get(0) {
+        let content = &latest_event.content;
+        let event = EventBuilder::new(Kind::Metadata, content, [])
+            .to_event(&keys)
+            .with_context(|| format!("イベントの生成に失敗しました key={}", npub))?;
+        let _result = client
+            .send_event(event)
+            .await
+            .with_context(|| format!("イベントの送信に失敗しました key={}", npub))?;
+        println!("Kind: 0 の更新に成功しました: key={}", npub)
+    } else {
+        println!("Kind: 0 の取得に失敗しました: key={}", npub);
+    }
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let config_path = "./config.json";
@@ -31,27 +59,10 @@ async fn main() -> Result<()> {
     client.connect().await;
 
     for key in config.keys {
-        let keys = Keys::from_sk_str(&key)
-            .with_context(|| format!("次のキーは正常に使用できませんでした: {}", key))?;
-        let npub: String = keys.public_key().to_bech32()?;
-        let filters = Filter::new()
-            .author(keys.public_key())
-            .kind(Kind::Metadata)
-            .limit(1);
-        let events = client
-            .get_events_of(vec![filters], Some(Duration::from_secs(10)))
-            .await
-            .with_context(|| format!("Kind: 0 の取得に失敗しました: key={}", npub))?;
-        if let Some(latest_event) = events.get(0) {
-            let content = &latest_event.content;
-            let event = EventBuilder::new(Kind::Metadata, content, [])
-                .to_event(&keys)
-                .with_context(|| format!("イベントの生成に失敗しました key={}", npub))?;
-            let _result = client.send_event(event).await?;
-        } else {
-            println!("Kind: 0 の取得に失敗しました: key={}", npub);
+        if let Err(e) = nostr_process(&client, key).await {
+            println!("{}", e);
+            continue;
         }
     }
-
     Ok(())
 }
