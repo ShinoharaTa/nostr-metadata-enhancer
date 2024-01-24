@@ -31,12 +31,11 @@ async fn main() -> Result<()> {
     client.connect().await;
 
     for key in config.keys {
-        let my_keys = Keys::from_sk_str(&key)
+        let keys = Keys::from_sk_str(&key)
             .with_context(|| format!("次のキーは正常に使用できませんでした: {}", key))?;
-        // println!("PubKey: {}", my_keys.public_key());
-        let npub: String = my_keys.public_key().to_bech32()?;
+        let npub: String = keys.public_key().to_bech32()?;
         let filters = Filter::new()
-            .author(my_keys.public_key())
+            .author(keys.public_key())
             .kind(Kind::Metadata)
             .limit(1);
         let events = client
@@ -45,7 +44,9 @@ async fn main() -> Result<()> {
             .with_context(|| format!("Kind: 0 の取得に失敗しました: key={}", npub))?;
         if let Some(latest_event) = events.get(0) {
             let content = &latest_event.content;
-            let event = EventBuilder::new(Kind::Metadata, content, []).to_event(&my_keys)?;
+            let event = EventBuilder::new(Kind::Metadata, content, [])
+                .to_event(&keys)
+                .with_context(|| format!("イベントの生成に失敗しました key={}", npub))?;
             let _result = client.send_event(event).await?;
         } else {
             println!("Kind: 0 の取得に失敗しました: key={}", npub);
