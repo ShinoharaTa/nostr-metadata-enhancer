@@ -10,5 +10,6 @@
     "wss://relay.damus.io",
     "wss://nos.lol",
     "wss://relay.nostr.wirednet.jp"
-  ]
+  ],
+  "exec_time": "0 0 12 * * *"
 }
