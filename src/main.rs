@@ -1,9 +1,9 @@
+use anyhow::{Context, Result};
+use job_scheduler::{Job, JobScheduler};
 use nostr_sdk::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::time::Duration;
-// use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
-use anyhow::{Context, Result};
 
 fn load_config(file_path: &str) -> Result<Config> {
     let file_content = fs::read_to_string(file_path)
@@ -17,6 +17,7 @@ fn load_config(file_path: &str) -> Result<Config> {
 struct Config {
     keys: Vec<String>,
     relays: Vec<String>,
+    exec_time: String,
 }
 
 async fn nostr_process(client: &Client, key: String) -> Result<()> {
@@ -47,6 +48,15 @@ async fn nostr_process(client: &Client, key: String) -> Result<()> {
     Ok(())
 }
 
+async fn process(client: Client, keys: Vec<String>) {
+    for key in keys {
+        if let Err(e) = nostr_process(&client, key).await {
+            println!("{}", e);
+            continue;
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let config_path = "./config.json";
@@ -58,11 +68,20 @@ async fn main() -> Result<()> {
         .with_context(|| format!("リレーの設定に失敗しました"))?;
     client.connect().await;
 
-    for key in config.keys {
-        if let Err(e) = nostr_process(&client, key).await {
-            println!("{}", e);
-            continue;
+    let mut sched = JobScheduler::new();
+    match config.exec_time.parse() {
+        Ok(cron) => {
+            sched.add(Job::new(cron, || {
+                tokio::spawn(process(client.clone(), config.keys.clone()));
+            }));
+        }
+        Err(e) => {
+            eprintln!("failed: {}", e);
         }
     }
-    Ok(())
+
+    loop {
+        sched.tick();
+        std::thread::sleep(Duration::from_millis(500));
+    }
 }
