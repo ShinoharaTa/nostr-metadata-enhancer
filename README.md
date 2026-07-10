@@ -1,4 +1,9 @@
-# Nostr Metadata Enhancer 
+# Nostr Metadata Enhancer
+
+## Operation moved
+
+This repository's metadata refresh job has been merged into [`awesome-nostr-apps`](https://github.com/ShinoharaTa/awesome-nostr-apps).
+Future development and operation will continue there, and standalone operation of this repository is closed.
 
 日本語ドキュメントこちら(jp only) -> [README_ja](./README_ja.md)
 
